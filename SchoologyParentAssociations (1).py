@@ -17,10 +17,13 @@ userList = [] # list of students to check if their parents have the right school
 updatedParentList =[] # store list of parents that were change
 parentFile = open("ParentChange.txt", "a")
 parentEmail_Global = ''
+parentEmail_Global_2 = ''
 continueProgram = True
 sleep_Adjustment = 0
 fastmode = True
 parentSchoologyProfileURL =''
+secondParentID = ''
+thirdParentID = ''
 
 # Functions
 
@@ -114,51 +117,46 @@ def checkForSecondParent():
     try:
         if(browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]')):
             print("2nd parent found")
+            secondParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]').get_attribute('href') #grab URL of 2nd parent
+            #browser.get(secondParentID); # Opens the tab of the second parents profile
+            # Need to read in the school
+            #school = readSecondParentSchools()
+            #print("Second Parent School - ",school)
+            #parentEmail_Global_2 = 
+            # browser.get(secondParentID) #Open the second parent profile page
             return True
     except: 
         print("No 2nd Parent")
-
+    
 def checkForThirdParent():
     try:
         if(browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[3]')):
             print("3rd parent found")
+            thirdParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[3]').get_attribute('href')
             return True
     except:
         print("No 3rd Parent")
 
+
 # Opens Parent Schoology account profile and reads data
-def parentProfile():
-    
-    #Check for more then one parent
-    if(checkForSecondParent()):
-        checkForThirdParent()
+# Returns the parent school
+def readParentSchool():
 
-    #Process the first parent
+    # check for more then one school
     try:
-        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']")
-        profileLink.click()
-
-        # grab parents school
-
-        # check for more then one school
-        try:
-            showAllButton = browser.find_element(By.XPATH,'//*[@id="center-top"]/div/div/div/span/span[2]') #failed on 4 buildings
-            showAllButton.click()
-            parentSchool1 = browser.find_element(By.CLASS_NAME,'school-name').text
-            print("parentSchool1:",parentSchool1)
-            return parentSchool1
-        except:
-            #print('No Show All Button')
-            parentSchool1 = browser.find_element(By.CLASS_NAME,'school-name').text
-            print("Parent School: ",parentSchool1)
-            return parentSchool1
-
-
+        showAllButton = browser.find_element(By.XPATH,'//*[@id="center-top"]/div/div/div/span/span[2]') #failed on 4 buildings
+        showAllButton.click()
+        parentSchool1 = browser.find_element(By.CLASS_NAME,'school-name').text
+        print("parentSchool1:",parentSchool1)
+        return parentSchool1
     except:
-        print("\n----no parent found---\n--------------------------------\n")
-        global continueProgram
-        continueProgram = False
-        return
+        #print('No Show All Button')
+        parentSchool1 = browser.find_element(By.CLASS_NAME,'school-name').text
+        print("Parent School: ",parentSchool1)
+        return parentSchool1
+
+
+
 
 # Grabs the Parent Schoology User ID & formats it into a string
 def getParentUserID():
@@ -221,6 +219,17 @@ def sameSchoolAsChildLogFile(count):
     f.write(str(userList[count]) + "\n")
     f.close()
 
+def clickOnParentProfile():
+    #Process the first parent
+    try:
+        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']") #on the student page currently
+        profileLink.click() # on the student page curently
+    except:
+        print("\n----no parent found---\n--------------------------------\n")
+        global continueProgram
+        continueProgram = False
+        return
+
 # Main Program Start
 #-------------------------------------------
 # Load up browser and login to Schoology
@@ -233,7 +242,7 @@ login(browser)
 # Populate userlist from CS
 populateUserList(500) #enter max size of list #-works 8/22
 
-#Loop thorugh list
+#Loop thorugh the student list
 length = len(userList)
 i=1
 while i < length:
@@ -248,12 +257,22 @@ while i < length:
         continue
 
     # read in parents schools
-    parentSchool = parentProfile()
+        #Check for more then one parent
+    if(checkForSecondParent()):
+        checkForThirdParent()
+
+    # Open the Parent #1's profile page
+    clickOnParentProfile()
+
+    # Read Parent #1's schools
+    parentSchool = readParentSchool()
+
+    # Exit the current Loop iteration if no parent was found from above
     if continueProgram == False:
         i += 1
         continue
 
-    # Grab parents Schoology user ID
+    # Grab parent #1's Schoology user ID
     userID = getParentUserID()
 
     parentEmailFound = False
