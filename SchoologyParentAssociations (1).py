@@ -22,6 +22,7 @@ continueProgram = True
 sleep_Adjustment = 0
 fastmode = True
 parentSchoologyProfileURL =''
+parentSchoologyProfileURL_2 = ''
 secondParentID = ''
 thirdParentID = ''
 
@@ -117,6 +118,8 @@ def checkForSecondParent():
     try:
         if(browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]')):
             print("2nd parent found")
+            # Not saving to global variable
+            global secondParentID
             secondParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]').get_attribute('href') #grab URL of 2nd parent           
             return True
     except: 
@@ -298,7 +301,25 @@ while i < length:
 
     if student_school in parentSchool:
         sameSchoolAsChildLogFile(i)
+        #Process the second parent
+        if(secondParentID!=''): 
+            browser.get(secondParentID); # Opens the tab of the second parents profile
+            # Need to read in the school
+            parentSchool = readParentSchool()
+            print("Second Parent School - ",parentSchool)
+            # Store the second parents email
+            parentEmail_Global_2 = findParentEmail()
+            # Check if 2nd parent school matches studetn
+            if student_school in parentSchool:
+                print("Second Parent: Same as student School")
+                break
+            else:
+                print("Second Parent has a different school")
+                print(parentEmail_Global_2)
+            
+
         browser.implicitly_wait(1)
+
         i += 1
 
     #Parent Account needs updating
