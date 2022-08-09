@@ -117,13 +117,7 @@ def checkForSecondParent():
     try:
         if(browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]')):
             print("2nd parent found")
-            secondParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]').get_attribute('href') #grab URL of 2nd parent
-            #browser.get(secondParentID); # Opens the tab of the second parents profile
-            # Need to read in the school
-            #school = readSecondParentSchools()
-            #print("Second Parent School - ",school)
-            #parentEmail_Global_2 = 
-            # browser.get(secondParentID) #Open the second parent profile page
+            secondParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]').get_attribute('href') #grab URL of 2nd parent           
             return True
     except: 
         print("No 2nd Parent")
@@ -197,6 +191,36 @@ def getChildCount():
 
     return childCount
 
+# Click on parent profile on the student's profile page
+def clickOnParentProfile():
+    #Process the first parent
+    try:
+        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']") #on the student page currently
+        profileLink.click() # on the student page curently
+    except:
+        print("\n----no parent found---\n--------------------------------\n")
+        global continueProgram
+        continueProgram = False
+        return
+
+def findParentEmail():
+    
+    
+    try:
+        parentEmail = browser.find_element(By.CSS_SELECTOR,"a.mailto").text
+        return parentEmail
+    except: 
+        
+        # Try again to find the email
+        try:
+            parentEmail = browser.find_element(By.XPATH,'#/html/body/div[3]/div[3]/div[1]/div[2]/div/div/div[2]/div[1]/div[1]/div/table/tbody/tr[4]/td/span/a').text
+            return parentEmail
+        except:
+            print("No Email Found")
+            parentEmail = "~"
+
+        
+
 # Print out Changes to the log file
 def parentLogFile(childCount):
     currentDT = datetime.datetime.now()
@@ -219,24 +243,17 @@ def sameSchoolAsChildLogFile(count):
     f.write(str(userList[count]) + "\n")
     f.close()
 
-def clickOnParentProfile():
-    #Process the first parent
-    try:
-        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']") #on the student page currently
-        profileLink.click() # on the student page curently
-    except:
-        print("\n----no parent found---\n--------------------------------\n")
-        global continueProgram
-        continueProgram = False
-        return
 
+#-------------------------------------------
 # Main Program Start
 #-------------------------------------------
 # Load up browser and login to Schoology
 
+# Adjust the sleep delays throughout the program
 if(fastmode == True):
     sleep_Adjustment = -0.1
 
+#Log in to Schoology 
 login(browser) 
 
 # Populate userlist from CS
@@ -257,7 +274,7 @@ while i < length:
         continue
 
     # read in parents schools
-        #Check for more then one parent
+    #Check for more then one parent
     if(checkForSecondParent()):
         checkForThirdParent()
 
@@ -288,30 +305,43 @@ while i < length:
     else:
         print ("Different School as child")
         # check for children schools
-        childCount = 0;
+        childCount = 0
 
-        # if check for email field
-        try:
-            # email field on parent profile page
-            parentUsername = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[2]/td/span/a').text
+        #Find a Parent Email
+        while True:
+            try:
+                # email field on parent profile page
+                parentEmail = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[2]/td/span/a').text
+                print('parent email: '+parentEmail)
+                parentEmailFound = True
+                parentEmail_Global = parentEmail
+                break
+            except:
+                parentEmail = findParentEmail()
+                if parentEmail != '~':
+                    print('parent email: '+parentEmail)
+                    parentEmailFound = True
+                    parentEmail_Global = parentEmail
+                    break
+            
+                
 
-            print('parent email: '+parentUsername)
-            parentEmailFound = True
-
-            parentEmail_Global = parentUsername
+        try:  
             #Run a function for email parent stuff
             # Grab Parent Email or username
-
             # Then check for multiple children
             # check for multiple kids
             # Check children count
             childCount = getChildCount()
 
             # change to Manage Users page
-            browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentUsername)
-            parentSchoologyProfileURL = 'https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentUsername
+            browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentEmail)
+            parentSchoologyProfileURL = 'https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentEmail
         except:
             if parentEmailFound == False:
+
+                #Try and find again
+                parentEmail = browser.find_element(By.CLASS,'sExtlink-processed mailto').text
                 #Run a function for non-email parent stuff then return
                 print("------No email was found-------")
                 i += 1
@@ -385,10 +415,19 @@ while i < length:
         # Mark changes in log file
         parentLogFile(childCount)
 
+        #Process the second parent
+        if(secondParentID!=''):
+            browser.get(secondParentID); # Opens the tab of the second parents profile
+            # Need to read in the school
+            school = readParentSchool()
+            print("Second Parent School - ",school)
+            #parentEmail_Global_2 = 
+
         browser.implicitly_wait(1)
+        secondParentID =''
         i += 1
 
 # Close browser and log file
-print('\n--------------------Quiting--------------------------')
+print('\n--------------------Quiting END OF LIST--------------------------')
 browser.quit()
 parentFile.close()
