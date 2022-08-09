@@ -3,3 +3,9 @@ Python program + Selenium - That examines a student profile and checks to see if
 
 1) Add a users.csv file to the program directory. 
 2) Populate the users list with schoology student unquie IDs
+
+
+Edge Cases
+<ul>Second Parent: School is Different <b> Not Implemented </b> </ul>
+<ul>Second Parent: School is Same - Implemented </ul>
+<ul>No Parent Email - Program Quits </ul>
