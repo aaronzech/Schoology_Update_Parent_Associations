@@ -34,7 +34,7 @@ def saveChanges():
     saveButton = browser.find_element(By.ID,'edit-submit')
     saveButton.submit()
     time.sleep(1+sleep_Adjustment) # delay for more reliablity
-    browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
+    #browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
 
 # Adds in the new school to match the student
 def changePrimarySchool(SchoolName):
@@ -319,6 +319,7 @@ while i < length:
                 browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
                 changePrimarySchool(student_school)
                 print(parentEmail_Global_2)
+                saveChanges()
             
 
         browser.implicitly_wait(1)
