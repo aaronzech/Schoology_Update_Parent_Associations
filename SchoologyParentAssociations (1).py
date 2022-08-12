@@ -37,12 +37,12 @@ def saveChanges():
     browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
 
 # Adds in the new school to match the student
-def changePrimarySchoo(SchoolName):
+def changePrimarySchool(SchoolName):
 
     # Schoology not accepting Osseo ALC Sr High need to remove high
     if SchoolName == 'Osseo ALC Sr High':
-        SchoolName = 'Osseo ALC Sr'
-
+        SchoolName = 'Osseo ALC Sr' 
+    
     # Single Search Result
     try:
         schoolbox = browser.find_element(By.ID,'select2-chosen-4')
@@ -208,7 +208,6 @@ def clickOnParentProfile():
 
 def findParentEmail():
     
-    
     try:
         parentEmail = browser.find_element(By.CSS_SELECTOR,"a.mailto").text
         return parentEmail
@@ -221,6 +220,7 @@ def findParentEmail():
         except:
             print("No Email Found")
             parentEmail = "~"
+            return parentEmail
 
         
 
@@ -312,9 +312,12 @@ while i < length:
             # Check if 2nd parent school matches studetn
             if student_school in parentSchool:
                 print("Second Parent: Same as student School")
-                break
+                i+=1
+                continue
             else:
                 print("Second Parent has a different school")
+                browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
+                changePrimarySchool(student_school)
                 print(parentEmail_Global_2)
             
 
@@ -344,8 +347,14 @@ while i < length:
                     parentEmailFound = True
                     parentEmail_Global = parentEmail
                     break
+                else:
+                    parentEmailFound = False
+                    break
             
-                
+        if parentEmailFound == False:
+                print("------No email was found-------")
+                i += 1
+                continue
 
         try:  
             #Run a function for email parent stuff
@@ -354,7 +363,6 @@ while i < length:
             # check for multiple kids
             # Check children count
             childCount = getChildCount()
-
             # change to Manage Users page
             browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentEmail)
             parentSchoologyProfileURL = 'https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search=' + parentEmail
@@ -372,7 +380,7 @@ while i < length:
 
         #if one child
         if childCount == 1:
-            changePrimarySchoo(student_school)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
+            changePrimarySchool(student_school)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
 
         if childCount == 2:
             print('two child')
@@ -406,6 +414,7 @@ while i < length:
         # Try this if there are three childen
         if childCount==3:
             print('3 kids')
+            input("Press Enter to continue...")
             # Schoology not accepting Osseo ALC Sr High need to remove high
             if student_school == 'Osseo ALC Sr High':
                 student_school = 'Osseo ALC Sr'
@@ -442,7 +451,11 @@ while i < length:
             # Need to read in the school
             school = readParentSchool()
             print("Second Parent School - ",school)
-            #parentEmail_Global_2 = 
+
+            secondParentID =''
+            i += 1
+            continue
+            
 
         browser.implicitly_wait(1)
         secondParentID =''

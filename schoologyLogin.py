@@ -9,7 +9,8 @@ from selenium.webdriver.common.keys import Keys
 def login(browser):
 
     browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo")
-
+    
+    time.sleep(0.3) # delay for more reliablity
     # Locate Username Box
     userName = browser.find_element(By.ID,"form-signin-username")
 
