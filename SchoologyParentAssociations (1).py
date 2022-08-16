@@ -20,7 +20,7 @@ parentEmail_Global = ''
 parentEmail_Global_2 = ''
 continueProgram = True
 sleep_Adjustment = 0
-fastmode = True
+fastmode = False
 parentSchoologyProfileURL =''
 parentSchoologyProfileURL_2 = ''
 secondParentID = ''
@@ -33,36 +33,104 @@ def saveChanges():
     
     saveButton = browser.find_element(By.ID,'edit-submit')
     saveButton.submit()
-    time.sleep(1+sleep_Adjustment) # delay for more reliablity
+    time.sleep(1.25+sleep_Adjustment) # delay for more reliablity
     #browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
 
 # Adds in the new school to match the student
-def changePrimarySchool(SchoolName):
+def changePrimarySchool(SchoolName,childCount): 
 
     # Schoology not accepting Osseo ALC Sr High need to remove high
     if SchoolName == 'Osseo ALC Sr High':
         SchoolName = 'Osseo ALC Sr' 
     
-    # Single Search Result
-    try:
+    # Parent Only Has One Child Override the current school.
+    if childCount == 1:
         schoolbox = browser.find_element(By.ID,'select2-chosen-4')
         schoolbox.click()
         schoolbox1 = browser.find_element(By.ID,'s2id_autogen4_search')  #
         schoolbox1.click()
         schoolbox1.send_keys(SchoolName)
         schoolbox1.send_keys(Keys.RETURN)
-
-    except:
-
+        return
+    elif childCount ==2:
+        #school count = 1
+        input("Press Enter if you see just one school listed, else enter number of schools") 
         try:
-            schoolbox = browser.find_element(By.ID,'select2-chosen-5')
-            schoolbox.click()
-            schoolbox1 = browser.find_element(By.ID,'s2id_autogen5_search')  #
-            schoolbox1.click()
-            schoolbox1.send_keys(SchoolName)
-            schoolbox1.send_keys(Keys.RETURN)
+            add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
+            add_school_box.click()
+            select_a_school_box = browser.find_element(By.CSS_SELECTOR,'#select2-chosen-8').click()
+            inputBox = browser.find_element(By.CSS_SELECTOR,"#s2id_autogen8_search")
+            inputBox.send_keys(SchoolName)
+            inputBox.send_keys(Keys.RETURN)
+        
+        #school count = 2+
         except:
-            print('break')
+            # Single Search Result
+            if childCount == 1:
+                schoolbox = browser.find_element(By.ID,'select2-chosen-4')
+                schoolbox.click()
+                schoolbox1 = browser.find_element(By.ID,'s2id_autogen4_search')  #
+                schoolbox1.click()
+                schoolbox1.send_keys(SchoolName)
+                schoolbox1.send_keys(Keys.RETURN)
+
+            if childCount == 2:
+                try:
+                    schoolbox = browser.find_element(By.ID,'select2-chosen-5')
+                    schoolbox.click()
+                    schoolbox1 = browser.find_element(By.ID,'s2id_autogen5_search')  #
+                    schoolbox1.click()
+                    schoolbox1.send_keys(SchoolName)
+                    schoolbox1.send_keys(Keys.RETURN)
+                except:
+                    print('break')
+    elif childCount == 3:
+        print('3 kids')
+        
+        # Method 1
+        # Works on a Parent with 2 aleady configured school sites
+        try:
+            add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
+            add_school_box.click()
+            select_a_school_box = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]').click()
+            inputBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') 
+            inputBox.send_keys(SchoolName)
+            inputBox.send_keys(Keys.RETURN)
+            return
+
+        except:
+             print('Error on Method 1')
+
+        # Method 2
+        # 1 School Already Configured
+        try:
+            select_a_school_box = browser.find_element(By.CSS_SELECTOR,'#select2-chosen-8').click()
+            inputBox = browser.find_element(By.CSS_SELECTOR,"#s2id_autogen8_search")
+            inputBox.send_keys(SchoolName)
+            inputBox.send_keys(Keys.RETURN)
+            return
+        except:
+            print("error on method 2")
+        try:
+            addSchool_Button = browser.find_element(By.XPATH,'//*[@id="edit-users-'+userID+'-building-nid-wrapper"]/div/div/div/a')
+            addSchool_Button.click()  # works
+            selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-8"]')
+            selectSchool.click()
+            addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen8_search"]') #was 8
+            addSchool_SearchBox.send_keys(student_school)
+            addSchool_SearchBox.send_keys(Keys.RETURN)
+            time.sleep(.8 + sleep_Adjustment)
+        except:
+            try:
+                selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-16"]')
+                selectSchool.click()
+                addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen16_search"]') #was 8
+                addSchool_SearchBox.send_keys(student_school)
+                addSchool_SearchBox.send_keys(Keys.RETURN)
+            except:
+                print('Error on 3 child parent try block:' + str(userList[i]))
+                browser.quit()
+
 
 # Populates the userList variable from the CSV file data
 def populateUserList(MAX_SIZE):
@@ -84,16 +152,16 @@ def studentProfile(username):
 
     searchBox.send_keys(username)  # enter username to search for
 
-    time.sleep(0.5+sleep_Adjustment) # delay for more reliablity
+    time.sleep(0.75+sleep_Adjustment) # delay for more reliablity
 
     searchButton = browser.find_element(By.CLASS_NAME,'sExtlink-processed').click()
 
-    time.sleep(0.3+sleep_Adjustment) # delay for more reliablity
+    time.sleep(0.5+sleep_Adjustment) # delay for more reliablity
 
     submitForm = browser.find_element(By.CLASS_NAME,'sUserFilterForm-processed')
     submitForm.submit()
 
-    time.sleep(4 + sleep_Adjustment) # delay for more reliablity
+    time.sleep(4.5 + sleep_Adjustment) # delay for more reliablity
 
     # Search results page
     # open user profile
@@ -134,7 +202,6 @@ def checkForThirdParent():
     except:
         print("No 3rd Parent")
 
-
 # Opens Parent Schoology account profile and reads data
 # Returns the parent school
 def readParentSchool():
@@ -151,9 +218,6 @@ def readParentSchool():
         parentSchool1 = browser.find_element(By.CLASS_NAME,'school-name').text
         print("Parent School: ",parentSchool1)
         return parentSchool1
-
-
-
 
 # Grabs the Parent Schoology User ID & formats it into a string
 def getParentUserID():
@@ -222,8 +286,6 @@ def findParentEmail():
             parentEmail = "~"
             return parentEmail
 
-        
-
 # Print out Changes to the log file
 def parentLogFile(childCount):
     currentDT = datetime.datetime.now()
@@ -246,7 +308,27 @@ def sameSchoolAsChildLogFile(count):
     f.write(str(userList[count]) + "\n")
     f.close()
 
-
+def processSecondParent(student_school):
+    browser.get(secondParentID); # Opens the tab of the second parents profile
+    # Need to read in the school
+    parentSchool = readParentSchool()
+    print("Second Parent School - ",parentSchool)
+    # Store the second parents email
+    parentEmail_Global_2 = findParentEmail()
+    #add a child count read?
+    childCount = getChildCount()
+    print("Second Parent Child Count = ",childCount)
+                
+    # Check if 2nd parent school matches studetn
+    if student_school in parentSchool:
+        print("Second Parent: Same as student School")
+        return
+    else:
+        print("Second Parent has a different school")
+        browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
+        changePrimarySchool(student_school,childCount)
+        print(parentEmail_Global_2)
+        saveChanges()
 #-------------------------------------------
 # Main Program Start
 #-------------------------------------------
@@ -254,7 +336,7 @@ def sameSchoolAsChildLogFile(count):
 
 # Adjust the sleep delays throughout the program
 if(fastmode == True):
-    sleep_Adjustment = -0.1
+    sleep_Adjustment = -0.25
 
 #Log in to Schoology 
 login(browser) 
@@ -268,6 +350,7 @@ i=1
 while i < length:
 
     continueProgram = True
+    # Load Schoology user management page
     browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo")
     # read in the students school
     student_school = studentProfile(userList[i])
@@ -299,30 +382,17 @@ while i < length:
     noChildFoundErro = False
     parentUserID = 0
 
+    # If the child matches the parent school
     if student_school in parentSchool:
+        
+        # Log Result
         sameSchoolAsChildLogFile(i)
-        #Process the second parent
-        if(secondParentID!=''): 
-            browser.get(secondParentID); # Opens the tab of the second parents profile
-            # Need to read in the school
-            parentSchool = readParentSchool()
-            print("Second Parent School - ",parentSchool)
-            # Store the second parents email
-            parentEmail_Global_2 = findParentEmail()
-            # Check if 2nd parent school matches studetn
-            if student_school in parentSchool:
-                print("Second Parent: Same as student School")
-                i+=1
-                continue
-            else:
-                print("Second Parent has a different school")
-                browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
-                changePrimarySchool(student_school)
-                print(parentEmail_Global_2)
-                saveChanges()
-            
 
-        browser.implicitly_wait(1)
+        #Process the second parent if there is one
+        if(secondParentID!=''):
+            processSecondParent(student_school) 
+
+        browser.implicitly_wait(1.5)
 
         i += 1
 
@@ -381,65 +451,38 @@ while i < length:
 
         #if one child
         if childCount == 1:
-            changePrimarySchool(student_school)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
+            changePrimarySchool(student_school,1)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
 
-        if childCount == 2:
+        elif childCount == 2:
             print('two child')
+            changePrimarySchool(student_school,2)
 
-            # Schoology not accepting Osseo ALC Sr High need to remove high
-            if student_school == 'Osseo ALC Sr High':
-                student_school = 'Osseo ALC Sr'
+            # # Schoology not accepting Osseo ALC Sr High need to remove high
+            # if student_school == 'Osseo ALC Sr High':
+            #     student_school = 'Osseo ALC Sr'
 
-            addSchool_Button = browser.find_element(By.XPATH,'//*[@id="edit-users-'+userID+'-building-nid-wrapper"]/div/div/div/a')
-            try:
-                addSchool_Button.click()  # works
+            # addSchool_Button = browser.find_element(By.XPATH,'//*[@id="edit-users-'+userID+'-building-nid-wrapper"]/div/div/div/a')
+            # try:
+            #     addSchool_Button.click()  # works
 
-                try:
-                    selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]') #was 8
-                    selectSchool.click()
-                    addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') #was 8
-                    addSchool_SearchBox.send_keys(student_school)
-                    addSchool_SearchBox.send_keys(Keys.RETURN)
-                except:
-                    selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-8"]')
+            #     try:
+            #         selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]') #was 8
+            #         selectSchool.click()
+            #         addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') #was 8
+            #         addSchool_SearchBox.send_keys(student_school)
+            #         addSchool_SearchBox.send_keys(Keys.RETURN)
+            #     except:
+            #         selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-8"]')
 
-                    selectSchool.click()
-                    addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen8_search"]')
-                    addSchool_SearchBox.send_keys(student_school)
-                    addSchool_SearchBox.send_keys(Keys.RETURN)
-
-            except:
-               print('error line 329 2 child:'+str(userList[i]))
-               browser.quit()
+            #         selectSchool.click()
+            #         addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen8_search"]')
+            #         addSchool_SearchBox.send_keys(student_school)
+            #         addSchool_SearchBox.send_keys(Keys.RETURN)
 
         # Try this if there are three childen
-        if childCount==3:
-            print('3 kids')
-            input("Press Enter to continue...")
-            # Schoology not accepting Osseo ALC Sr High need to remove high
-            if student_school == 'Osseo ALC Sr High':
-                student_school = 'Osseo ALC Sr'
-
-            try:
-                addSchool_Button = browser.find_element(By.XPATH,'//*[@id="edit-users-'+userID+'-building-nid-wrapper"]/div/div/div/a')
-                addSchool_Button.click()  # works
-                selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-8"]')
-                selectSchool.click()
-                addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen8_search"]') #was 8
-                addSchool_SearchBox.send_keys(student_school)
-                addSchool_SearchBox.send_keys(Keys.RETURN)
-                time.sleep(.8 + sleep_Adjustment)
-            except:
-                try:
-                    selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-16"]')
-                    selectSchool.click()
-                    addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen16_search"]') #was 8
-                    addSchool_SearchBox.send_keys(student_school)
-                    addSchool_SearchBox.send_keys(Keys.RETURN)
-                except:
-                    print('Error on 3 child parent try block:' + str(userList[i]))
-                    browser.quit()
-
+        elif childCount==3:
+            changePrimarySchool(student_school,3)
+            
         # Save Changes to Parent Account Profile
         saveChanges()
 
