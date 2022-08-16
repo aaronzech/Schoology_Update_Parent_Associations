@@ -16,7 +16,7 @@ def login(browser):
 
     userName.send_keys(secrets.username)
 
-    time.sleep(0.1) # delay for more reliablity
+    time.sleep(0.25) # delay for more reliablity
 
     # Locate Password Box
     passwordBox = browser.find_element(By.ID,'form-signin-password')
