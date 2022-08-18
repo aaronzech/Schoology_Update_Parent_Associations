@@ -28,6 +28,32 @@ thirdParentID = ''
 
 # Functions
 
+#Overwrite the current singular school listed
+def editParentSchoolSchoolCount1(SchoolName):
+    schoolbox = browser.find_element(By.ID,'select2-chosen-4')
+    schoolbox.click()
+    schoolbox1 = browser.find_element(By.ID,'s2id_autogen4_search')  #
+    schoolbox1.click()
+    schoolbox1.send_keys(SchoolName)
+    schoolbox1.send_keys(Keys.RETURN)
+
+# If Parent Profile has 1 school already, and we need to add on a second school, without removing the first one
+def editParentSchoolCount1_Addon_One_School(SchoolName):
+    add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
+    add_school_box.click()
+    select_a_school_box = browser.find_element(By.CSS_SELECTOR,'#select2-chosen-8').click()
+    inputBox = browser.find_element(By.CSS_SELECTOR,"#s2id_autogen8_search")
+    inputBox.send_keys(SchoolName)
+    inputBox.send_keys(Keys.RETURN)
+def editParentSchoolCount2_Addon_One_School(SchoolName):
+        add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
+        add_school_box.click()
+        select_a_school_box = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]').click()
+        inputBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') 
+        inputBox.send_keys(SchoolName)
+        inputBox.send_keys(Keys.RETURN)
+
+
 # Saves changes on the edit users page
 def saveChanges():
     
@@ -36,8 +62,10 @@ def saveChanges():
     time.sleep(1.25+sleep_Adjustment) # delay for more reliablity
     #browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
 
-# Adds in the new school to match the student
-def changePrimarySchool(SchoolName,childCount): 
+
+# Adds in the new school to Parent's account
+# Requires various methods depending on the number of schools already added to the parent's profile
+def changePrimarySchool(SchoolName,childCount,parentSchoolCounts): 
 
     # Schoology not accepting Osseo ALC Sr High need to remove high
     if SchoolName == 'Osseo ALC Sr High':
@@ -45,34 +73,63 @@ def changePrimarySchool(SchoolName,childCount):
     
     # Parent Only Has One Child Override the current school.
     if childCount == 1:
-        schoolbox = browser.find_element(By.ID,'select2-chosen-4')
-        schoolbox.click()
-        schoolbox1 = browser.find_element(By.ID,'s2id_autogen4_search')  #
-        schoolbox1.click()
-        schoolbox1.send_keys(SchoolName)
-        schoolbox1.send_keys(Keys.RETURN)
+        editParentSchoolSchoolCount1(SchoolName)    
         return
+
+    # If the parent has two kids
+    # Try to only add in a new school    
     elif childCount ==2:
+        
+        #Check School Counts
+        if parentSchoolCounts == 1:
+            #change the only school
+            schoolbox = browser.find_element(By.CSS_SELECTOR,'.add-building-link').click()
+            schoolbox1 = browser.find_element(By.ID,'select2-chosen-8').click()
+            schoolbox_input = browser.find_element(By.ID,'s2id_autogen8_search').send_keys(SchoolName)
+            time.sleep(0.1)
+            schoolbox_input = browser.find_element(By.ID,'s2id_autogen8_search').send_keys(Keys.RETURN)
+            return
+
+        check = input("Press Enter if you see just one school listed, else enter number of schools") 
+        #input parent school
+        if check == '2':
+
+            if childCount == 2:
+                try:
+                    schoolbox = browser.find_element(By.ID,'select2-chosen-5')
+                    schoolbox.click()
+                    schoolbox1 = browser.find_element(By.ID,'s2id_autogen5_search')  #
+                    schoolbox1.click()
+                    schoolbox1.send_keys(SchoolName)
+                    schoolbox1.send_keys(Keys.RETURN)
+                except:
+                    print('break')
+                try:
+                    editParentSchoolCount2_Addon_One_School(SchoolName)
+                    return
+                except:
+                    print("Error:editParentSchoolCount2_Addon_One_School")
+
+                try: 
+                    add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
+                    add_school_box.click()
+                    select_a_school_box = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]').click()
+                    inputBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') 
+                    inputBox.send_keys(SchoolName)
+                    inputBox.send_keys(Keys.RETURN)
+                    return
+                except:
+                    print("error")
+
         #school count = 1
-        input("Press Enter if you see just one school listed, else enter number of schools") 
         try:
-            add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
-            add_school_box.click()
-            select_a_school_box = browser.find_element(By.CSS_SELECTOR,'#select2-chosen-8').click()
-            inputBox = browser.find_element(By.CSS_SELECTOR,"#s2id_autogen8_search")
-            inputBox.send_keys(SchoolName)
-            inputBox.send_keys(Keys.RETURN)
+            editParentSchoolCount1_Addon_One_School(SchoolName)
         
         #school count = 2+
         except:
             # Single Search Result
             if childCount == 1:
-                schoolbox = browser.find_element(By.ID,'select2-chosen-4')
-                schoolbox.click()
-                schoolbox1 = browser.find_element(By.ID,'s2id_autogen4_search')  #
-                schoolbox1.click()
-                schoolbox1.send_keys(SchoolName)
-                schoolbox1.send_keys(Keys.RETURN)
+                editParentSchoolSchoolCount1(SchoolName)
 
             if childCount == 2:
                 try:
@@ -191,7 +248,7 @@ def checkForSecondParent():
             secondParentID = browser.find_element(By.XPATH,'//*[@id="main-inner"]/table/tbody/tr[3]/td/a[2]').get_attribute('href') #grab URL of 2nd parent           
             return True
     except: 
-        print("No 2nd Parent")
+        return
     
 def checkForThirdParent():
     try:
@@ -308,6 +365,18 @@ def sameSchoolAsChildLogFile(count):
     f.write(str(userList[count]) + "\n")
     f.close()
 
+# Cleans the Parent School Array
+# Solves the issue that Brooklyn Middle School creates 4 schools instead of one
+def cleanParentSchoolArray(arr):
+    try:
+        arr.remove(' a Science')
+        arr.remove('Technology')
+        arr.remove(' Engineering')
+        arr.remove(' Art and Math School')
+        return arr
+    except:
+        return arr
+
 def processSecondParent(student_school):
     browser.get(secondParentID); # Opens the tab of the second parents profile
     # Need to read in the school
@@ -318,6 +387,9 @@ def processSecondParent(student_school):
     #add a child count read?
     childCount = getChildCount()
     print("Second Parent Child Count = ",childCount)
+    parentSchoolArray = parentSchool.split(",")
+    parentSchoolArray = cleanParentSchoolArray(parentSchoolArray)
+    parent_proflie_school_count = len(parentSchoolArray)-1
                 
     # Check if 2nd parent school matches studetn
     if student_school in parentSchool:
@@ -325,8 +397,10 @@ def processSecondParent(student_school):
         return
     else:
         print("Second Parent has a different school")
+        if parentEmail_Global_2 == '~':
+            return
         browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
-        changePrimarySchool(student_school,childCount)
+        changePrimarySchool(student_school,childCount,parent_proflie_school_count)
         print(parentEmail_Global_2)
         saveChanges()
 #-------------------------------------------
@@ -384,7 +458,7 @@ while i < length:
 
     # If the child matches the parent school
     if student_school in parentSchool:
-        
+
         # Log Result
         sameSchoolAsChildLogFile(i)
 
@@ -401,7 +475,9 @@ while i < length:
         print ("Different School as child")
         # check for children schools
         childCount = 0
-
+        parentSchoolArray = parentSchool.split(",")
+        parentSchoolArray = cleanParentSchoolArray(parentSchoolArray)
+        parent_proflie_school_count = len(parentSchoolArray)-1
         #Find a Parent Email
         while True:
             try:
@@ -451,37 +527,13 @@ while i < length:
 
         #if one child
         if childCount == 1:
-            changePrimarySchool(student_school,1)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
-
+            changePrimarySchool(student_school,1,parent_proflie_school_count)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
         elif childCount == 2:
             print('two child')
-            changePrimarySchool(student_school,2)
-
-            # # Schoology not accepting Osseo ALC Sr High need to remove high
-            # if student_school == 'Osseo ALC Sr High':
-            #     student_school = 'Osseo ALC Sr'
-
-            # addSchool_Button = browser.find_element(By.XPATH,'//*[@id="edit-users-'+userID+'-building-nid-wrapper"]/div/div/div/a')
-            # try:
-            #     addSchool_Button.click()  # works
-
-            #     try:
-            #         selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]') #was 8
-            #         selectSchool.click()
-            #         addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') #was 8
-            #         addSchool_SearchBox.send_keys(student_school)
-            #         addSchool_SearchBox.send_keys(Keys.RETURN)
-            #     except:
-            #         selectSchool = browser.find_element(By.XPATH,'//*[@id="select2-chosen-8"]')
-
-            #         selectSchool.click()
-            #         addSchool_SearchBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen8_search"]')
-            #         addSchool_SearchBox.send_keys(student_school)
-            #         addSchool_SearchBox.send_keys(Keys.RETURN)
-
+            changePrimarySchool(student_school,2,parent_proflie_school_count)
         # Try this if there are three childen
         elif childCount==3:
-            changePrimarySchool(student_school,3)
+            changePrimarySchool(student_school,3,parent_proflie_school_count)
             
         # Save Changes to Parent Account Profile
         saveChanges()
