@@ -6,6 +6,9 @@ Python program + Selenium - That examines a student profile and checks to see if
 
 
 Edge Cases
-<ul>Second Parent: School is Different <b> Not Implemented </b> </ul>
+There's still a lot of edge cases, the program is getting more code to handle the various cases.
+
+<ul>Second Parent: School is Different <b> Implemented </b> </ul>
 <ul>Second Parent: School is Same - Implemented </ul>
-<ul>No Parent Email - Program Quits </ul>
+<ul>Second Parent: No Email - Implemented </ul>
+
