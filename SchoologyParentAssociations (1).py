@@ -45,6 +45,7 @@ def editParentSchoolCount1_Addon_One_School(SchoolName):
     inputBox = browser.find_element(By.CSS_SELECTOR,"#s2id_autogen8_search")
     inputBox.send_keys(SchoolName)
     inputBox.send_keys(Keys.RETURN)
+# If Parent Profile has 2 schools already, adn we need to add on a thrid school, without removing any
 def editParentSchoolCount2_Addon_One_School(SchoolName):
         add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
         add_school_box.click()
@@ -53,15 +54,11 @@ def editParentSchoolCount2_Addon_One_School(SchoolName):
         inputBox.send_keys(SchoolName)
         inputBox.send_keys(Keys.RETURN)
 
-
 # Saves changes on the edit users page
 def saveChanges():
-    
     saveButton = browser.find_element(By.ID,'edit-submit')
     saveButton.submit()
     time.sleep(1.25+sleep_Adjustment) # delay for more reliablity
-    #browser.get('https://osseo.schoology.com/users/manage/edit/moreinfo')
-
 
 # Adds in the new school to Parent's account
 # Requires various methods depending on the number of schools already added to the parent's profile
@@ -77,87 +74,27 @@ def changePrimarySchool(SchoolName,childCount,parentSchoolCounts):
         return
 
     # If the parent has two kids
-    # Try to only add in a new school    
+    # Try to only add in a new school
+    # ---- Thinking that I elminate childcount, and just do school counts    
     elif childCount ==2:
         
         #Check School Counts
         if parentSchoolCounts == 1:
-            #change the only school
-            schoolbox = browser.find_element(By.CSS_SELECTOR,'.add-building-link').click()
-            schoolbox1 = browser.find_element(By.ID,'select2-chosen-8').click()
-            schoolbox_input = browser.find_element(By.ID,'s2id_autogen8_search').send_keys(SchoolName)
-            time.sleep(0.1)
-            schoolbox_input = browser.find_element(By.ID,'s2id_autogen8_search').send_keys(Keys.RETURN)
-            return
-
-        check = input("Press Enter if you see just one school listed, else enter number of schools") 
-        #input parent school
-        if check == '2':
-
-            if childCount == 2:
-                try:
-                    schoolbox = browser.find_element(By.ID,'select2-chosen-5')
-                    schoolbox.click()
-                    schoolbox1 = browser.find_element(By.ID,'s2id_autogen5_search')  #
-                    schoolbox1.click()
-                    schoolbox1.send_keys(SchoolName)
-                    schoolbox1.send_keys(Keys.RETURN)
-                except:
-                    print('break')
-                try:
-                    editParentSchoolCount2_Addon_One_School(SchoolName)
-                    return
-                except:
-                    print("Error:editParentSchoolCount2_Addon_One_School")
-
-                try: 
-                    add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
-                    add_school_box.click()
-                    select_a_school_box = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]').click()
-                    inputBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') 
-                    inputBox.send_keys(SchoolName)
-                    inputBox.send_keys(Keys.RETURN)
-                    return
-                except:
-                    print("error")
-
-        #school count = 1
-        try:
             editParentSchoolCount1_Addon_One_School(SchoolName)
-        
-        #school count = 2+
-        except:
-            # Single Search Result
-            if childCount == 1:
-                editParentSchoolSchoolCount1(SchoolName)
-
-            if childCount == 2:
-                try:
-                    schoolbox = browser.find_element(By.ID,'select2-chosen-5')
-                    schoolbox.click()
-                    schoolbox1 = browser.find_element(By.ID,'s2id_autogen5_search')  #
-                    schoolbox1.click()
-                    schoolbox1.send_keys(SchoolName)
-                    schoolbox1.send_keys(Keys.RETURN)
-                except:
-                    print('break')
-    elif childCount == 3:
-        print('3 kids')
-        
-        # Method 1
-        # Works on a Parent with 2 aleady configured school sites
-        try:
-            add_school_box = browser.find_element(By.CSS_SELECTOR,'.add-building-link')
-            add_school_box.click()
-            select_a_school_box = browser.find_element(By.XPATH,'//*[@id="select2-chosen-12"]').click()
-            inputBox = browser.find_element(By.XPATH,'//*[@id="s2id_autogen12_search"]') 
-            inputBox.send_keys(SchoolName)
-            inputBox.send_keys(Keys.RETURN)
+            return
+        if parentSchoolCounts == 2:
+            editParentSchoolCount2_Addon_One_School(SchoolName)
             return
 
-        except:
-             print('Error on Method 1')
+    elif childCount == 3:
 
+        if parentSchoolCounts == 1:
+            editParentSchoolCount1_Addon_One_School(SchoolName)
+            return
+        if parentSchoolCounts == 2:
+            editParentSchoolCount2_Addon_One_School(SchoolName)
+            return
+        
         # Method 2
         # 1 School Already Configured
         try:
@@ -201,8 +138,27 @@ def populateUserList(MAX_SIZE):
                 break
             count += 1
 
-# Searches the student Schoology profile and reads the school data, and looks for parent
-def studentProfile(username):
+#reads the school data, and looks for parent
+def clickOnStudentProfile():
+    try: 
+        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']")
+        profileLink.click()
+
+        # Loaded Students profile page, scrape school info
+        SchoolName = browser.find_element(By.CLASS_NAME,'school-name').text
+        SchoolName = SchoolName.split(',', 1)[0]
+        print('Student School: ' + SchoolName)
+        print('\n')
+        return SchoolName
+    except:
+        print("Error")
+        global continueProgram
+        continueProgram = False
+        return
+
+
+# Searches the student Schoology profile
+def searchForStudent(username):
     username = userList[i]
     print("Username:",username)
     searchBox = browser.find_element(By.ID,'edit-filter-search')
@@ -219,25 +175,6 @@ def studentProfile(username):
     submitForm.submit()
 
     time.sleep(4.5 + sleep_Adjustment) # delay for more reliablity
-
-    # Search results page
-    # open user profile
-    try: 
-        profileLink = browser.find_element(By.CSS_SELECTOR,"[title^='View user profile.']")
-        profileLink.click()
-
-        # Loaded Students profile page, scrape school info
-        SchoolName = browser.find_element(By.CLASS_NAME,'school-name').text
-        SchoolName = SchoolName.split(',', 1)[0]
-        print('Student School: ' + SchoolName)
-        print('\n')
-
-        return SchoolName
-    except:
-        print("Error")
-        global continueProgram
-        continueProgram = False
-        return
 
 def checkForSecondParent():
     try:
@@ -396,7 +333,7 @@ def processSecondParent(student_school):
         print("Second Parent: Same as student School")
         return
     else:
-        print("Second Parent has a different school")
+        print("---Second Parent has a different school---")
         if parentEmail_Global_2 == '~':
             return
         browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo?role=266607&search="+parentEmail_Global_2)
@@ -427,7 +364,8 @@ while i < length:
     # Load Schoology user management page
     browser.get("https://osseo.schoology.com/users/manage/edit/moreinfo")
     # read in the students school
-    student_school = studentProfile(userList[i])
+    searchForStudent(userList[i])
+    student_school = clickOnStudentProfile()
 
     if continueProgram == False:
         i += 1
@@ -472,12 +410,12 @@ while i < length:
 
     #Parent Account needs updating
     else:
-        print ("Different School as child")
-        # check for children schools
+        print ("---Different School then child---")
         childCount = 0
         parentSchoolArray = parentSchool.split(",")
         parentSchoolArray = cleanParentSchoolArray(parentSchoolArray)
         parent_proflie_school_count = len(parentSchoolArray)-1
+
         #Find a Parent Email
         while True:
             try:
@@ -497,12 +435,14 @@ while i < length:
                 else:
                     parentEmailFound = False
                     break
-            
+
+        # Skip the loop if no email is found    
         if parentEmailFound == False:
                 print("------No email was found-------")
                 i += 1
                 continue
-
+        
+        # if an Email was found try and update the parent account
         try:  
             #Run a function for email parent stuff
             # Grab Parent Email or username
@@ -522,10 +462,8 @@ while i < length:
                 print("------No email was found-------")
                 i += 1
                 continue
-                #browser.quit()
-                #parentFile.close()
 
-        #if one child
+       # Alter the program flow based on the child count of the parent
         if childCount == 1:
             changePrimarySchool(student_school,1,parent_proflie_school_count)  # Changes the primary school location - ONLY DO THIS FOR SINGLE PARENT, STUDENTS?
         elif childCount == 2:
@@ -552,7 +490,6 @@ while i < length:
             i += 1
             continue
             
-
         browser.implicitly_wait(1)
         secondParentID =''
         i += 1
